@@ -851,6 +851,7 @@ function liveUpdate() {
   const el = document.getElementById('liveText');
   el.textContent = p || '填寫左側欄位後，prompt 會即時顯示於此...';
   el.classList.toggle('has-content', p.length > 0);
+  if (p) hubSave(p, 'kv');
 }
 
 // listen to all controls
@@ -1074,6 +1075,29 @@ function esc(s = '') {
 function escJs(s = '') {
   return String(s).replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
 }
+
+// ── Hub 共用板整合 ────────────────────────────────────────────
+var HUB_KEY = 'hub_prompt';
+function hubSave(text, source) {
+  if (!text) return;
+  localStorage.setItem(HUB_KEY, JSON.stringify({text: text, source: source, time: Date.now()}));
+}
+
+// 從 Hub 或 Interrogator 帶入的 prompt → 填入 subject 欄位
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const imported = params.get('import');
+  if (!imported) return;
+  window.addEventListener('DOMContentLoaded', function() {
+    const subjectEl = document.getElementById('subject');
+    if (subjectEl) {
+      subjectEl.value = decodeURIComponent(imported);
+      subjectEl.dispatchEvent(new Event('input'));
+      showToast('✅ 已從 Hub 帶入咒語到主體描述');
+    }
+  });
+})();
+// ─────────────────────────────────────────────────────────────
 
 // ── Init ──
 renderSaved();
